@@ -14,9 +14,10 @@ setup(
 
     install_requires=['flask',
                       'flask-wtf',
-                      'python-ldap'
+                      'flask-login',
+                      'pyldap'
                       ],
-
+    tests_require=['mock', 'flask_testing'],
     entry_points={
         'console_scripts': [
             'flask-ldap-login-check = flask_ldap_login.check:main',

@@ -30,7 +30,7 @@ LDAP = {
 #===============================================================================
 # Import existing application
 #===============================================================================
-from .base_app import app, User
+from examples.base_app import app, User
 
 app.config.update(LDAP=LDAP)
 ldap_mgr = LDAPLoginManager(app)

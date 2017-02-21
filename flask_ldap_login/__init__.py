@@ -41,13 +41,16 @@ update the application like::
 
 """
 import logging
+import sys
 
-import flask
 import ldap
 
 from .forms import LDAPLoginForm
 
 log = logging.getLogger(__name__)
+
+PY2 = sys.version_info[0] < 3
+
 
 def scalar(value):
     """
@@ -60,52 +63,45 @@ def scalar(value):
 
 def _is_utf8(s):
     try:
-        if isinstance(s, str):
-            us = s.decode('utf-8')
-        
+        if PY2 and isinstance(s, str):
+            s.decode('utf-8')
+
         return True
     except UnicodeDecodeError:
         return False
 
+
 class LDAPLoginManager(object):
-    '''
+    """
     This object is used to hold the settings used for LDAP user lookup. Instances of
     `LDAPLoginManager` are *not* bound to specific apps, so you can create
     one in the main body of your code and then bind it to your
     app in a factory function.
-    '''
+    """
 
     def __init__(self, app=None):
 
         if app is not None:
-            self.init_app(app)
+            self._config = app.config.get('LDAP', {})
+            app.ldap_login_manager = self
+
+            self.config.setdefault('BIND_DN', '')
+            self.config.setdefault('BIND_AUTH', '')
+            self.config.setdefault('URI', 'ldap://127.0.0.1')
+
+            if self.config.get('USER_SEARCH') and not isinstance(self.config['USER_SEARCH'], list):
+                self.config['USER_SEARCH'] = [self.config['USER_SEARCH']]
 
         self._raise_errors = False
         self.conn = None
         self._save_user = None
 
     def set_raise_errors(self, state=True):
-        '''
+        """
         Set the _raise_errors flags to allow for the calling code to provide error handling.
         This is especially helpful for debugging from flask_ldap_login_check.
-        '''
-        self._raise_errors=state
-
-    def init_app(self, app):
-        '''
-        Configures an application. This registers an `after_request` call, and
-        attaches this `LoginManager` to it as `app.login_manager`.
-        '''
-
-        self._config = app.config.get('LDAP', {})
-        app.ldap_login_manager = self
-
-        self.config.setdefault('BIND_DN', '')
-        self.config.setdefault('BIND_AUTH', '')
-        self.config.setdefault('URI', 'ldap://127.0.0.1')
-
-        if self.config.get('USER_SEARCH') and not isinstance(self.config['USER_SEARCH'], list):
-            self.config['USER_SEARCH'] = [self.config['USER_SEARCH']]
+        """
+        self._raise_errors = state
 
     def format_results(self, results):
         """
@@ -119,37 +115,37 @@ class LDAPLoginManager(object):
 
         keymap = self.config.get('KEY_MAP')
         if keymap:
-            return {key:scalar(userobj.get(value)) for key, value in list(keymap.items()) if _is_utf8(scalar(userobj.get(value))) }
+            return {key: scalar(userobj.get(value)) for key, value in list(keymap.items()) if
+                    _is_utf8(scalar(userobj.get(value)))}
         else:
-            return {key:scalar(value) for key, value in list(userobj.items()) if _is_utf8(scalar(value)) }
+            return {key: scalar(value) for key, value in list(userobj.items()) if _is_utf8(scalar(value))}
 
     def save_user(self, callback):
-        '''
-        This sets the callback for staving a user that has been looked up from from ldap. 
+        """
+        This sets the callback for staving a user that has been looked up from from ldap.
         The function you set should take a username (unicode) and and userdata (dict).
 
         :param callback: The callback for retrieving a user object.
-        '''
+        """
 
         self._save_user = callback
         return callback
 
     @property
     def config(self):
-        'LDAP config vars'
+        """LDAP config vars"""
         return self._config
 
     @property
     def attrlist(self):
-        'Transform the KEY_MAP paramiter into an attrlist for ldap filters'
+        """Transform the KEY_MAP paramiter into an attrlist for ldap filters"""
         keymap = self.config.get('KEY_MAP')
         if keymap:
             # https://github.com/ContinuumIO/flask-ldap-login/issues/11
             # https://continuumsupport.zendesk.com/agent/tickets/393 
-            return [ s.encode('utf-8') for s in list(keymap.values()) ]
+            return [s.encode('utf-8') for s in list(keymap.values())]
         else:
             return None
-
 
     def bind_search(self, username, password):
         """
@@ -158,7 +154,7 @@ class LDAPLoginManager(object):
 
         log.debug("Performing bind/search")
 
-        ctx = {'username':username, 'password':password}
+        ctx = {'username': username, 'password': password}
 
         user = self.config['BIND_DN'] % ctx
 
@@ -207,14 +203,13 @@ class LDAPLoginManager(object):
 
         return self.format_results(results)
 
-
     def direct_bind(self, username, password):
         """
         Bind to username/password directly
         """
         log.debug("Performing direct bind")
 
-        ctx = {'username':username, 'password':password}
+        ctx = {'username': username, 'password': password}
         scope = self.config.get('SCOPE', ldap.SCOPE_SUBTREE)
         user = self.config['BIND_DN'] % ctx
 
@@ -229,9 +224,8 @@ class LDAPLoginManager(object):
         self.conn.unbind_s()
         return self.format_results(results)
 
-
     def connect(self):
-        'initialize ldap connection and set options'
+        """initialize ldap connection and set options"""
         log.debug("Connecting to ldap server %s" % self.config['URI'])
         self.conn = ldap.initialize(self.config['URI'])
 
@@ -271,5 +265,3 @@ class LDAPLoginManager(object):
         else:
             result = self.direct_bind(username, password)
         return result
-
-

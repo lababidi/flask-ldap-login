@@ -1,23 +1,27 @@
-from flask.ext.wtf import Form
+from flask_wtf import FlaskForm
 import wtforms
 from wtforms import validators
 from flask import flash, current_app
 import ldap
 
-class LDAPLoginForm(Form):
+class LDAPLoginForm(FlaskForm):
     """
     This is a form to be subclassed by your application. 
     
-    Once validiated will have a `form.user` object that contains 
+    Once validated will have a `form.user` object that contains
     a user object.
     """
 
-    username = wtforms.TextField('Username', validators=[validators.Required()])
-    password = wtforms.PasswordField('Password', validators=[validators.Required()])
+    username = wtforms.StringField('Username', validators=[validators.DataRequired()])
+    password = wtforms.PasswordField('Password', validators=[validators.DataRequired()])
     remember_me = wtforms.BooleanField('Remember Me', default=True)
 
+    def __init__(self, *args, **kwargs):
+        super(FlaskForm, self).__init__(*args, **kwargs)
+        self.user = None
+
     def validate_ldap(self):
-        'Validate the username/password data against ldap directory'
+        """Validate the username/password data against ldap directory"""
         ldap_mgr = current_app.ldap_login_manager
         username = self.username.data
         password = self.password.data
@@ -41,7 +45,6 @@ class LDAPLoginForm(Form):
         self.user = ldap_mgr._save_user(username, userdata)
         return True
 
-
     def validate(self, *args, **kwargs):
         """
         Validates the form by calling `validate` on each field, passing any
@@ -50,7 +53,7 @@ class LDAPLoginForm(Form):
         also calls `validate_ldap` 
         """
 
-        valid = Form.validate(self, *args, **kwargs)
+        valid = FlaskForm.validate(self, *args, **kwargs)
         if not valid: return valid
 
         return self.validate_ldap()
