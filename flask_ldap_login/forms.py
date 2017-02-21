@@ -17,7 +17,7 @@ class LDAPLoginForm(FlaskForm):
     remember_me = wtforms.BooleanField('Remember Me', default=True)
 
     def __init__(self, *args, **kwargs):
-        super(FlaskForm, self).__init__(*args, **kwargs)
+        super(LDAPLoginForm, self).__init__(*args, **kwargs)
         self.user = None
 
     def validate_ldap(self):
