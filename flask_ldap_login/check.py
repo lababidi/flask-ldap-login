@@ -25,14 +25,14 @@ def main():
     module = import_string(import_name)
     app = getattr(module, appname)
 
-    username = args.username or raw_input('Username: ')
+    username = args.username or input('Username: ')
     password = args.password or getpass.getpass()
 
     app.ldap_login_manager.set_raise_errors()
 
     try:
         userdata = app.ldap_login_manager.ldap_login(username, password)
-        print("Got userdata for %s" % username)
+        print(("Got userdata for %s" % username))
         pprint(userdata)
     except Exception as e:
         print("User not found")

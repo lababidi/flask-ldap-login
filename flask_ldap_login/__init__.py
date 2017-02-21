@@ -119,9 +119,9 @@ class LDAPLoginManager(object):
 
         keymap = self.config.get('KEY_MAP')
         if keymap:
-            return {key:scalar(userobj.get(value)) for key, value in keymap.items() if _is_utf8(scalar(userobj.get(value))) }
+            return {key:scalar(userobj.get(value)) for key, value in list(keymap.items()) if _is_utf8(scalar(userobj.get(value))) }
         else:
-            return {key:scalar(value) for key, value in userobj.items() if _is_utf8(scalar(value)) }
+            return {key:scalar(value) for key, value in list(userobj.items()) if _is_utf8(scalar(value)) }
 
     def save_user(self, callback):
         '''
@@ -146,7 +146,7 @@ class LDAPLoginManager(object):
         if keymap:
             # https://github.com/ContinuumIO/flask-ldap-login/issues/11
             # https://continuumsupport.zendesk.com/agent/tickets/393 
-            return [ s.encode('utf-8') for s in keymap.values() ]
+            return [ s.encode('utf-8') for s in list(keymap.values()) ]
         else:
             return None
 
@@ -240,7 +240,7 @@ class LDAPLoginManager(object):
         # to 0, but this needs to be the last option set, and since the config dictionary is not
         # sorted, this is not necessarily true. Sort the list of options so that if OPT_X_TLS_NEWCTX
         # is present, it is applied last.
-        options = self.config.get('OPTIONS', {}).items()
+        options = list(self.config.get('OPTIONS', {}).items())
         options.sort(key=lambda x: x[0] == 'OPT_X_TLS_NEWCTX')
 
         for opt, value in options:

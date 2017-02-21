@@ -25,7 +25,7 @@ LDAP = {
                 }
 }
 
-from base_app import app, User
+from .base_app import app, User
 app.config.update(LDAP=LDAP)
 ldap_mgr = LDAPLoginManager(app)
 
@@ -43,10 +43,10 @@ def ldap_login():
     form = LDAPLoginForm(request.form)
     if form.validate_on_submit():
         login_user(form.user, remember=True)
-        print "Valid"
+        print("Valid")
         return redirect('/')
     else:
-        print "Invalid"
+        print("Invalid")
     return render_template('login.html', form=form)
 
 if __name__ == '__main__':

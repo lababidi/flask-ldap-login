@@ -26,12 +26,12 @@ def test_keys(keys, results):
 def search_s(base, scope, filtstr=None, attrlist=None):
     if filtstr:
         keys = [filt.split('=', 1) for filt in filtstr.split(',')]
-        for (user, _), results in MOCK_LDAP_USERS.items():
+        for (user, _), results in list(MOCK_LDAP_USERS.items()):
             for result in results:
                 if test_keys(keys, result):
                     return results
     else:
-        for (user, _), results in MOCK_LDAP_USERS.items():
+        for (user, _), results in list(MOCK_LDAP_USERS.items()):
             if base == user:
                 return results
 #===============================================================================
